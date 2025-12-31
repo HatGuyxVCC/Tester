@@ -1,0 +1,290 @@
+You are a senior product engineer building a small, polished, mobile-first static web app. Deliver a working static app with a “music poster” sheet-music staff UI as the main focal point. No API, no backend in v1. The app’s job is to generate a copy/paste Prompt Packet that the user pastes into a TRAINED CUSTOM GPT (a GPT that already contains the same knowledge files: template definitions, quality rules, and a document of curated high-quality examples).
+	0.	Product Goal (what we’re building)
+Build a lightweight app that helps write Flint-style rap by:
+	1.	letting the user select a Flow Template (predefined patterns that describe where the two emphasis runs begin and how many syllables each run should contain),
+	2.	showing that pattern visually on a sheet-music staff chart (the hero of the UI),
+	3.	outputting a structured Prompt Packet the user copies and pastes into a trained GPT.
+
+Key Flint concept to encode: each rap line typically has TWO emphasis runs per line:
+	•	Run A = first emphasis block (lead phrase)
+	•	Run B = second emphasis block (tail phrase; typically carries the rhyme/MSER anchor)
+
+Non-goal v1: no direct “send to GPT” integration, no API, no backend. Human bridge remains Copy → Paste INTO the trained GPT.
+	1.	End-to-End Workflow (start → finish)
+Workflow diagram (must appear in README):
+[Open App (local/static)]
+|
+v
+[Select Flow Template]
+|
+v
+[Staff Chart updates (hero visual)]
+|
+v
+[Optional edits (typed inputs or tapping circles)]
+
+	•	L1: Run A syllables + start slot, Run B syllables + start slot
+	•	L2: Run A syllables + start slot, Run B syllables + start slot
+	•	MSER goal: 2 or 4 only
+	•	BPM, topics, style, optional drafts
+|
+v
+[Click “Copy Prompt Packet”]
+|
+v
+[Prompt Packet copied to clipboard]
+|
+v
+[User pastes into TRAINED GPT]
+|
+v
+[Trained GPT generates lines following the packet + its internal knowledge rules/examples]
+|
+v
+(Optional) user manually saves best outputs into examples library document (v1 manual)
+	
+	2.	UI / Layout Requirements (alignment decisions)
+2.1 Hard layout decisions
+
+	•	Remove any dedicated explanation panel about the grid entirely (no “Row #1 explanation” block).
+	•	The sheet-music staff chart is the main focal point and must appear near the top on mobile.
+	•	Remove sliders. All numeric edits are typed inputs (or steppers).
+	•	Keep only relevant controls:
+A) Flow Template selector (primary control)
+B) BPM (default 97)
+C) Bars shown (visualization only; default 1 or 2; range 1–6)
+D) Output lines (default 8)
+E) For Line 1 and Line 2:
+	•	Run A syllables (int)
+	•	Run A start slot (1–8)
+	•	Run B syllables (int)
+	•	Run B start slot (1–8)
+	•	Optional draft text (optional)
+F) MSER syllable goal: only 2 or 4 (radio/select)
+G) Topics (comma-separated)
+H) Style constraints (free text)
+	•	Buttons:
+	•	Primary: Copy Prompt Packet
+	•	Secondary: Reset (clears inputs back to defaults)
+
+2.2 Visual style target
+The UI should resemble a clean classroom “Music Notes” poster:
+	•	White “paper” background with subtle frame (wood frame optional)
+	•	Thick black staff lines
+	•	Minimal clutter; chart first, controls second
+	•	Mobile-first responsive layout
+	•	Allow horizontal scroll for chart rather than compressing it
+
+	3.	CRYSTAL CLEAR Staff Chart Visual Spec (core requirement)
+This section is the source of truth. The defining feature is the “8 circles per row” with syllable numbers placed on the correct circles.
+
+3.1 Concept
+This is not pitch notation. It is a timing grid presented with sheet-music styling.
+We are showing where syllable-run emphases start within a 4/4 bar subdivided into eighth-notes.
+
+3.2 Top row must be the count ruler (required)
+Row #1 MUST be the top row and must display the count as the alignment ruler:
+	•	Display 8 circles across the bar, left-to-right, representing 8 eighth-note slots.
+	•	Label these slots visually as: 1 + 2 + 3 + 4 +
+	•	This count row is always present and all other rows must align directly beneath it.
+
+Count mapping (fixed):
+	•	Slot 1 = “1”
+	•	Slot 2 = “+” (after 1)
+	•	Slot 3 = “2”
+	•	Slot 4 = “+” (after 2)
+	•	Slot 5 = “3”
+	•	Slot 6 = “+” (after 3)
+	•	Slot 7 = “4”
+	•	Slot 8 = “+” (after 4)
+
+3.3 Line rows (L1 and L2) beneath the count row
+Row #2 (Line 1 / L1) and Row #3 (Line 2 / L2) must each display:
+	•	The same 8 circles aligned perfectly under the count row’s circles.
+	•	Each line row represents ONE rap line.
+	•	Each line must show TWO emphasis runs per line (Run A and Run B).
+Therefore each line row must be capable of showing TWO syllable counts placed at start slots.
+
+3.4 Syllable number placement on circles (required, high specificity)
+When a flow is selected or edited, the syllable counts must appear inside the correct circles on each line row:
+	•	Run A syllable count number appears inside the circle at Run A start slot.
+	•	Run B syllable count number appears inside the circle at Run B start slot.
+The number styling must be “shiny proper blue badge” style (clean modern blue, subtle highlight/gradient, legible). The visual should match the example: the number is clearly visible and looks like a UI badge, not handwritten.
+
+Example (classic 9/7 applied to both lines):
+	•	L1: Run A = 9 at slot 1; Run B = 7 at slot 5
+=> On L1 row: slot1 circle displays “9” in shiny blue; slot5 circle displays “7” in shiny blue.
+	•	L2: Run A = 9 at slot 1; Run B = 7 at slot 5
+=> On L2 row: slot1 circle displays “9”; slot5 circle displays “7”.
+
+Important: Do not replace this UI model with only rectangles/pills. Rectangles may be added later, but v1 must implement the circle-slot placement model with numbers placed on circles.
+
+3.5 Scaling to more lines (future-proofing)
+If future versions include more lines, each additional line is another row beneath L2:
+	•	Each new line row must also have the same 8-circle grid aligned to the count row.
+	•	Each line row still has exactly two emphasis numbers (Run A and Run B).
+
+3.6 Bars shown
+Default bars shown: 1 or 2. Range: 1–6.
+	•	Each bar repeats the same 8-slot circle pattern.
+	•	Bar boundaries must be visually separated (thicker line or spacing).
+	•	Horizontal scrolling allowed/preferred on mobile.
+
+3.7 Optional interactivity (allowed, not required)
+Minimum v1 can set start slots via typed inputs. If tapping circles is implemented:
+	•	Provide a per-line toggle: “Editing Run A” vs “Editing Run B”
+	•	Tapping a circle sets the start slot for the selected run
+	•	The number badge updates instantly
+
+	4.	Functional Requirements
+4.1 Inputs (typed)
+Global:
+
+	•	BPM (default 97)
+	•	Bars shown (visualization only; default 2; range 1–6)
+	•	Output lines (default 8)
+	•	Topics (comma-separated)
+	•	Style constraints (free text)
+	•	MSER syllable goal: only 2 or 4
+	•	Optional MSER hint text (example: “best positions / recognition”)
+
+Line 1:
+	•	Run A syllables (int)
+	•	Run A start slot (1–8)
+	•	Run B syllables (int)
+	•	Run B start slot (1–8)
+	•	Optional draft text
+
+Line 2:
+	•	same as line 1
+
+4.2 Validation
+	•	Start slots must be 1–8
+	•	Syllables must be 1–16 (default cap 16)
+	•	MSER goal must be 2 or 4
+	•	Allow any ordering of start slots; optional warning if B start is before A start
+
+4.3 Persistence
+	•	Auto-save all state to localStorage
+	•	Restore on load
+	•	Reset overwrites localStorage with defaults
+
+	5.	Templates + Source Files (no backend)
+Required project files:
+
+	•	templates.json (required)
+	•	rules.md (required)
+	•	examples.json (optional v1; recommended v1.1)
+
+5.1 templates.json schema (required)
+Each template includes:
+	•	id, name, tagline, description
+	•	defaults: bpm, barsShown, outputLines, mserGoal
+	•	line1: a_syll, a_start, b_syll, b_start
+	•	line2: a_syll, a_start, b_syll, b_start
+
+5.2 Required v1 templates (minimum 4)
+Template 1: Late-Start Snap
+	•	Line 1: A=7@slot4, B=4@slot7
+	•	Line 2: A=8@slot1, B=8@slot5
+
+Template 2: Even Split Double-Punch
+	•	Line 1: A=8@slot1, B=8@slot5
+	•	Line 2: A=8@slot1, B=8@slot5
+
+Template 3: Staggered Pivot
+	•	Line 1: A=7@slot2, B=6@slot5
+	•	Line 2: A=7@slot2, B=6@slot5
+
+Template 4: Front-Load + Tail Lock
+	•	Line 1: A=8@slot1, B=6@slot5
+	•	Line 2: A=8@slot1, B=6@slot5
+
+	6.	Prompt Packet Output Spec (copy/paste into trained GPT)
+6.1 Output must be a single block
+When the user clicks Copy Prompt Packet, generate ONE single structured payload with these sections in this exact order:
+	7.	FLOW PACKET
+	8.	QUALITY RULES (insert from rules.md)
+	9.	EXAMPLE ANCHORS (optional; from examples.json; or placeholder if none)
+	10.	TASK (explicit instruction for trained GPT)
+
+6.2 FLOW PACKET canonical format
+FLOW PACKET
+BPM: [number]
+Time: 4/4
+Grid: eighth-notes (1 + 2 + 3 + 4 +) => slots 1–8
+
+Flow Template: [Template Name]
+
+Line 1 (two emphasis runs):
+	•	Run A: [A syll] syllables, start slot [A start] (count label derived from slot)
+	•	Run B: [B syll] syllables, start slot [B start] (count label derived from slot)
+
+Line 2 (two emphasis runs):
+	•	Run A: [A syll] syllables, start slot [A start]
+	•	Run B: [B syll] syllables, start slot [B start]
+
+MSER:
+	•	Ending rhyme syllable target: [2 or 4]
+	•	Rule: the last phrase of each line (Run B) must share a [2 or 4]-syllable ending rhyme sound.
+
+Topics: [topics]
+Style: [style]
+Output: [N] lines total (repeat Line 1 + Line 2 pattern)
+
+Count labels:
+	•	slot1 = 1
+	•	slot2 = + after 1
+	•	slot3 = 2
+	•	slot4 = + after 2
+	•	slot5 = 3
+	•	slot6 = + after 3
+	•	slot7 = 4
+	•	slot8 = + after 4
+
+6.3 TASK section
+TASK
+You are a trained Flint-rap flow GPT. Use the FLOW PACKET timing exactly.
+Follow QUALITY RULES strictly. Use EXAMPLE ANCHORS as style reference if provided.
+Return exactly [N] lines labeled 1–[N].
+For each line, mark the phrase boundary between Run A and Run B using “ / ”.
+Keep syllables tight (aim exact; ±1 only if absolutely necessary).
+Ensure Run B ends with the MSER target length (2 or 4 syllables) consistently across lines.
+
+6.4 Copy behavior
+	•	Copy to clipboard (Clipboard API with fallback)
+	•	Show “Copied” toast
+
+	7.	Technical Implementation Notes
+
+	•	Use vanilla HTML/CSS/JS.
+	•	Render the chart with SVG for crisp staff lines and scalable circles/badges.
+	•	State-driven rendering: input change updates state, saves localStorage, re-renders chart and prompt preview.
+	•	Chart must support horizontal scroll if barsShown > 1.
+
+State model:
+{ bpm, barsShown, outputLines, topics, styleText, mserGoal, mserHint, selectedTemplateId,
+line1:{a_syll,a_start,b_syll,b_start,draft},
+line2:{a_syll,a_start,b_syll,b_start,draft} }
+	8.	Acceptance Criteria
+
+	•	Works offline by opening index.html.
+	•	Top row is the count ruler: 1+2+3+4+ displayed across 8 circles.
+	•	L1 row and L2 row are directly underneath, each with 8 circles aligned to the count.
+	•	Syllable numbers display inside the correct circles for Run A and Run B on each line (shiny blue badge style).
+	•	Sliders removed; typed inputs only.
+	•	Flow template selection populates defaults and updates chart.
+	•	Copy Prompt Packet outputs one single block with FLOW PACKET + QUALITY RULES + EXAMPLE ANCHORS + TASK.
+	•	localStorage persistence works.
+	•	Reset restores defaults.
+	•	Mobile readability is strong; horizontal scroll allowed.
+	
+	9.	Required Deliverables
+
+	•	index.html
+	•	styles.css
+	•	app.js
+	•	templates.json
+	•	rules.md
+	•	README.md
+	•	examples.json (optional v1; recommended v1.1)
